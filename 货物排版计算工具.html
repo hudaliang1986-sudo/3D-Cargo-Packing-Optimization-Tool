@@ -897,6 +897,21 @@
                 return;
             }
 
+            // 校验货物尺寸不能大于托盘尺寸（水平方向）
+            // 货物可以垂直放置（旋转90度），所以宽度方向允许互换
+            const canFitHorizontal = cargoLength <= palletLength && cargoWidth <= palletWidth;
+            const canFitVertical = cargoWidth <= palletLength && cargoLength <= palletWidth;
+            
+            if (!canFitHorizontal && !canFitVertical) {
+                alert(`货物尺寸不能适配托盘！\n\n托盘尺寸：长${palletLength}mm × 宽${palletWidth}mm × 高${palletHeight}mm\n货物尺寸：长${cargoLength}mm × 宽${cargoWidth}mm × 高${cargoHeight}mm\n\n提示：货物水平放置时长×宽不能超过托盘的长×宽\n      货物垂直放置时长×宽不能超过托盘的宽×长`);
+                return;
+            }
+            
+            if (cargoHeight > palletHeight) {
+                alert(`货物高度（${cargoHeight}mm）不能大于托盘堆叠高度（${palletHeight}mm）！`);
+                return;
+            }
+
             // 保存货物信息到数据库（如果不存在则新增）
             // 如果没有输入名称，使用尺寸作为默认名称
             const displayName = cargoName || `货物${cargoLength}×${cargoWidth}×${cargoHeight}`;
@@ -1087,8 +1102,13 @@
             const scaledPalletL = palletLength * scale;
             const scaledPalletW = palletWidth * scale;
             const scaledPalletH = 10 * scale;
-            const scaledCargoL = cargoLength * scale;
-            const scaledCargoW = cargoWidth * scale;
+            
+            // 根据方向计算货物实际尺寸
+            const isVertical = orientation === 'vertical';
+            const actualCargoL = isVertical ? cargoWidth : cargoLength; // 沿托盘长度方向
+            const actualCargoW = isVertical ? cargoLength : cargoWidth;  // 沿托盘宽度方向
+            const scaledCargoL = actualCargoL * scale;
+            const scaledCargoW = actualCargoW * scale;
             const scaledCargoH = cargoHeight * scale;
 
             // 计算网格排列
@@ -1119,17 +1139,41 @@
                 const endCargo = Math.min(startCargo + cargoPerPallet, totalCargo);
                 const cargoOnPallet = endCargo - startCargo;
 
+                // 根据方向计算每层行列数
+                const colsPerLayer = Math.floor(palletLength / actualCargoL);
+                const rowsPerLayer = Math.floor(palletWidth / actualCargoW);
+                const cargoPerLayer = colsPerLayer * rowsPerLayer;
+                // 实际显示的层数
+                const actualLayers = Math.ceil(cargoOnPallet / cargoPerLayer);
+
                 // 创建货物数量标签
                 const cargoLabel = createTextSprite(`#${i + 1}: ${cargoOnPallet}件`);
-                cargoLabel.position.set(0, scaledPalletH + scaledCargoH * layers + 15, 0);
+                cargoLabel.position.set(0, scaledPalletH + scaledCargoH * actualLayers + 15, 0);
                 palletSubGroup.add(cargoLabel);
 
-                // 创建货物
-                const colsPerLayer = Math.floor(palletLength / (orientation === 'horizontal' ? cargoLength : cargoWidth));
-                const rowsPerLayer = Math.floor(palletWidth / (orientation === 'horizontal' ? cargoWidth : cargoLength));
+                // 计算货物码放的总尺寸（实际占用尺寸）
+                const stackLength = colsPerLayer * actualCargoL;  // 长度方向
+                const stackWidth = rowsPerLayer * actualCargoW;   // 宽度方向
+                const stackHeight = actualLayers * cargoHeight;   // 高度方向
 
+                // 创建码放尺寸标签 - 长度方向（在托盘前方）
+                const lengthLabel = createTextSprite(`长: ${stackLength.toFixed(0)}mm`);
+                lengthLabel.position.set(0, scaledPalletH / 2, scaledPalletW / 2 + scaledCargoW / 2 + 30);
+                palletSubGroup.add(lengthLabel);
+
+                // 创建码放尺寸标签 - 宽度方向（在托盘右侧）
+                const widthLabel = createTextSprite(`宽: ${stackWidth.toFixed(0)}mm`);
+                widthLabel.position.set(scaledPalletL / 2 + scaledCargoL / 2 + 30, scaledPalletH / 2, 0);
+                palletSubGroup.add(widthLabel);
+
+                // 创建码放尺寸标签 - 高度方向（在托盘左侧）
+                const heightLabel = createTextSprite(`高: ${stackHeight.toFixed(0)}mm`);
+                heightLabel.position.set(-scaledPalletL / 2 - scaledCargoL / 2 - 30, scaledPalletH / 2, 0);
+                palletSubGroup.add(heightLabel);
+
+                // 创建货物
                 let cargoIndex = 0;
-                for (let layer = 0; layer < layers && cargoIndex < cargoOnPallet; layer++) {
+                for (let layer = 0; layer < actualLayers && cargoIndex < cargoOnPallet; layer++) {
                     for (let row = 0; row < rowsPerLayer && cargoIndex < cargoOnPallet; row++) {
                         for (let col = 0; col < colsPerLayer && cargoIndex < cargoOnPallet; col++) {
                             const cargoGeometry = new THREE.BoxGeometry(scaledCargoL - 1, scaledCargoH - 1, scaledCargoW - 1);
@@ -1321,8 +1365,13 @@
             const scaledPalletL = palletL * scale;
             const scaledPalletW = palletW * scale;
             const scaledPalletH = 15 * scale; // 托盘高度
-            const scaledCargoL = cargoL * scale;
-            const scaledCargoW = cargoW * scale;
+            
+            // 根据方向计算货物实际尺寸
+            const isVertical = orientation === LAYOUT.VERTICAL;
+            const actualCargoL = isVertical ? cargoW : cargoL; // 沿托盘长度方向
+            const actualCargoW = isVertical ? cargoL : cargoW;  // 沿托盘宽度方向
+            const scaledCargoL = actualCargoL * scale;
+            const scaledCargoW = actualCargoW * scale;
             const scaledCargoH = cargoH * scale;
 
             // 计算当前托盘上的货物数
@@ -1358,8 +1407,10 @@
             }
 
             // 计算每层行列数
-            const cols = Math.floor(palletL / (orientation === LAYOUT.HORIZONTAL ? cargoL : cargoW));
-            const rows = Math.floor(palletW / (orientation === LAYOUT.HORIZONTAL ? cargoW : cargoL));
+            const cols = Math.floor(palletL / actualCargoL);
+            const rows = Math.floor(palletW / actualCargoW);
+            const cargoPerLayer = cols * rows;
+            const actualLayers = Math.ceil(cargoOnPallet / cargoPerLayer);
 
             // 货物颜色渐变
             const colorStart = new THREE.Color(0x4a90d9);
@@ -1367,7 +1418,7 @@
 
             // 创建货物
             let cargoIndex = 0;
-            for (let layer = 0; layer < Math.floor(cargoPerPallet / (cols * rows)) && cargoIndex < cargoOnPallet; layer++) {
+            for (let layer = 0; layer < actualLayers && cargoIndex < cargoOnPallet; layer++) {
                 for (let row = 0; row < rows && cargoIndex < cargoOnPallet; row++) {
                     for (let col = 0; col < cols && cargoIndex < cargoOnPallet; col++) {
                         const cargoGeometry = new THREE.BoxGeometry(scaledCargoL - 2, scaledCargoH - 2, scaledCargoW - 2);
@@ -1405,6 +1456,26 @@
                     }
                 }
             }
+
+            // 计算货物码放的总尺寸
+            const stackLength = cols * actualCargoL;
+            const stackWidth = rows * actualCargoW;
+            const stackHeight = actualLayers * cargoH;
+
+            // 创建码放尺寸标签 - 长度方向（在托盘前方）
+            const lengthLabel = createTextSprite(`长: ${stackLength.toFixed(0)}mm`);
+            lengthLabel.position.set(0, scaledPalletH / 2, scaledPalletW / 2 + scaledCargoW / 2 + 30);
+            palletGroup.add(lengthLabel);
+
+            // 创建码放尺寸标签 - 宽度方向（在托盘右侧）
+            const widthLabel = createTextSprite(`宽: ${stackWidth.toFixed(0)}mm`);
+            widthLabel.position.set(scaledPalletL / 2 + scaledCargoL / 2 + 30, scaledPalletH / 2, 0);
+            palletGroup.add(widthLabel);
+
+            // 创建码放尺寸标签 - 高度方向（在托盘左侧）
+            const heightLabel = createTextSprite(`高: ${stackHeight.toFixed(0)}mm`);
+            heightLabel.position.set(-scaledPalletL / 2 - scaledCargoL / 2 - 30, scaledPalletH / 2, 0);
+            palletGroup.add(heightLabel);
 
             // 将托盘添加到场景
             scene.add(palletGroup);
@@ -1709,7 +1780,11 @@
             document.getElementById('cargoListModal').style.display = 'none';
         }
 
+        // 暴露弹窗相关函数到全局
         window.showCargoListModal = showCargoListModal;
+        window.closeCargoListModal = closeCargoListModal;
+        window.selectCargoFromList = selectCargoFromList;
+        window.deleteCargoAndClose = deleteCargoAndClose;
     </script>
 
     <!-- 货物列表弹窗 -->

@@ -1,12 +1,8 @@
-
 # 货物排版计算工具 - 3D版
 
 一款专业的托盘货物摆放计算工具，支持3D可视化展示，帮助您高效规划货物装载方案。
 
-<img width="1478" height="890" alt="image" src="https://github.com/user-attachments/assets/47d0ed7a-2836-4761-89c8-194934cbc1c5" />
-<img width="1440" height="1075" alt="image" src="https://github.com/user-attachments/assets/3a7783b3-f697-4e6d-b20a-39b74be4fcd2" />
-
-
+![界面预览](https://via.placeholder.com/800x450/1a1a2e/00d4ff?text=货物排版计算工具)
 
 ## 功能特点
 
@@ -40,6 +36,7 @@
 - 支持鼠标拖拽旋转、缩放
 - 爆炸视图查看内部结构
 - 自动旋转展示
+- **实时显示货物码放尺寸**：每个托盘上显示长、宽、高的实际占用尺寸（mm）
 
 ## 界面介绍
 
@@ -194,6 +191,10 @@
 - **数据存储**：localStorage
 
 ## 更新日志
+
+### v1.1.0 (2026-03-18)
+- 3D视图中新增货物码放尺寸显示（长、宽、高）
+- 实时显示每个托盘货物的实际占用尺寸（mm）
 
 ### v1.0.0 (2026-03-18)
 - 初始版本发布
