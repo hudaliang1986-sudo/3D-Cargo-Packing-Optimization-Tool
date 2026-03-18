@@ -4,6 +4,9 @@
 
 ![界面预览](https://via.placeholder.com/800x450/1a1a2e/00d4ff?text=货物排版计算工具)
 
+<img width="1477" height="885" alt="image" src="https://github.com/user-attachments/assets/0f807266-5e36-4670-bfa1-5ad636f7b6af" />
+<img width="1454" height="1082" alt="image" src="https://github.com/user-attachments/assets/ba0061a2-304d-4a28-8da2-70e51568c7f4" />
+
 ## 功能特点
 
 ### 📐 托盘尺寸设置
